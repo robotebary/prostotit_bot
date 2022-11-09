@@ -1,7 +1,6 @@
 import telebot
 import pandas as pd
 import openpyxl
-from openpyxl import load_workbook
 
 
 bot = telebot.TeleBot('5579090888:AAGMUTxFCVRXm0UcVWnoy3UkePrImGasK4g')
@@ -20,10 +19,23 @@ setup_xlsx()
 def get_user_text(message):
     file_info = bot.get_file(message.document.file_id)
     downloaded_file = bot.download_file(file_info.file_path)
+    print(file_info)
+    file_format_in = message.document.file_name.rfind('.')
+    file_format = message.document.file_name[file_format_in:]
 
-    src = 'C:/Users/Александр/Desktop/Александр/боты/prostotit_bot/Photoo/' + message.document.file_id + ".png"
+
+    src = 'C:/Users/Александр/Desktop/Александр/боты/prostotit_bot/Photoo/' + message.document.file_id + file_format
     with open(src, 'wb') as new_file:
         new_file.write(downloaded_file)
+        wright_name(src)
+
+
+def wright_name(src):
+    a = openpyxl.load_workbook('schedule.xlsx')
+    ws = a.active
+    ws['A1'] = src
+    print(ws['A1'].value)
+    a.save('schedule.xlsx')
 
 
 
