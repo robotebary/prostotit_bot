@@ -85,20 +85,40 @@ def get_user_text(message):
     src = 'C:/Users/Александр/Desktop/Александр/боты/prostotit_bot/Photoo/' + message.document.file_id + file_format
     with open(src, 'wb') as new_file:
         new_file.write(downloaded_file)
-        wright_name(src)
+        n = wright_name(src)
 
     bot.send_message(message.chat.id, "произвести настройку", reply_markup=markup)
+    bot.register_next_step_handler(message, setup, n)
+
+
+@bot.message_handler(content_types=['text'])
+def setup(message, n):
+    if message.text == "Время":
+        bot.send_message(message.chat.id, f"У меня нет имени{n}")
+
+    elif message.text == "Период":
+        bot.send_message(message.chat.id, text="Поздороваться с читателями")
+
+    elif message.text == "удаление":
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        button1 = types.KeyboardButton("👋 Поздороваться")
+        button2 = types.KeyboardButton("❓ Задать вопрос")
+        markup.add(button1, button2)
+        bot.send_message(message.chat.id, text="Вы вернулись в главное меню", reply_markup=markup)
+    else:
+        bot.send_message(message.chat.id, text="На такую комманду я не запрограммировал..")
 
 
 def wright_name(src):
     n = 1
     a = openpyxl.load_workbook('schedule.xlsx')
     ws = a.active
-    while ws[f'A{n}'].value != None:
+    while ws[f'A{n}'].value is not None:
         n += 1
     ws[f'A{n}'] = src
     print(ws[f'A{n}'].value)
     a.save('schedule.xlsx')
+    return n
 
 
 print("bot started")
