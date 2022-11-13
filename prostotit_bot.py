@@ -2,9 +2,24 @@ import telebot
 from telebot import types
 import pandas as pd
 import openpyxl
+import os
 
 bot = telebot.TeleBot('5579090888:AAGMUTxFCVRXm0UcVWnoy3UkePrImGasK4g')
 
+
+# print("Текущая деректория:", os.getcwd())
+
+
+
+# Создание папки с фото
+
+if not os.path.isdir("Photoo"):
+     os.mkdir("Photoo")
+
+os.chdir("Photoo")
+ph = os.getcwd()
+print(ph)
+# Проверка типа файла
 
 # @bot.message_handler(content_types=['text', 'audio', 'document', 'photo', 'sticker', 'video', 'video_note', 'voice',
 #                                     'location', 'contact', 'new_chat_members', 'left_chat_member', 'new_chat_title',
@@ -14,7 +29,9 @@ bot = telebot.TeleBot('5579090888:AAGMUTxFCVRXm0UcVWnoy3UkePrImGasK4g')
 # def mes_inf(message):
 #     bot.send_message(message.chat.id, message)
 
+
 # установка эксель файла если его нет в папке с ботом
+#
 def setup_xlsx():
     try:
         open('schedule.xlsx')
@@ -24,6 +41,8 @@ def setup_xlsx():
 
 
 setup_xlsx()
+
+
 
 
 @bot.message_handler(commands=['start'])
@@ -70,6 +89,7 @@ def func(message):
 
 @bot.message_handler(content_types=['photo', 'document'])
 def get_user_text(message):
+    global ph
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton("Время")
     btn2 = types.KeyboardButton("Период")
@@ -82,10 +102,11 @@ def get_user_text(message):
     file_format_in = message.document.file_name.rfind('.')
     file_format = message.document.file_name[file_format_in:]
 
-    src = 'C:/Users/Александр/Desktop/Александр/боты/prostotit_bot/Photoo/' + message.document.file_id + file_format
+    src = ph + message.document.file_id + file_format
     with open(src, 'wb') as new_file:
         new_file.write(downloaded_file)
         n = wright_name(src)
+        print(src)
 
     bot.send_message(message.chat.id, "произвести настройку", reply_markup=markup)
     bot.register_next_step_handler(message, setup, n)
