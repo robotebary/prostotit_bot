@@ -93,16 +93,19 @@ def get_user_text(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton("Время")
     btn2 = types.KeyboardButton("Период")
-    back = types.KeyboardButton("удаление")
-    markup.add(btn1, btn2, back)
+    btn3 = types.KeyboardButton("удаление")
+    back = types.KeyboardButton("Вернуться в главное меню")
+    markup.add(btn1, btn2, btn3, back)
 
     file_info = bot.get_file(message.document.file_id)
     downloaded_file = bot.download_file(file_info.file_path)
-    print(file_info)
     file_format_in = message.document.file_name.rfind('.')
     file_format = message.document.file_name[file_format_in:]
 
-    src = ph + message.document.file_id + file_format
+    src = f"{ph}/" + message.document.file_id + file_format
+
+    print(src)
+
     with open(src, 'wb') as new_file:
         new_file.write(downloaded_file)
         n = wright_name(src)
@@ -114,8 +117,9 @@ def get_user_text(message):
 
 @bot.message_handler(content_types=['text'])
 def setup(message, n):
+
     if message.text == "Время":
-        bot.send_message(message.chat.id, f"У меня нет имени{n}")
+        bot.send_message(message.chat.id, f"У меня нет имени{c}")
 
     elif message.text == "Период":
         bot.send_message(message.chat.id, text="Поздороваться с читателями")
@@ -126,6 +130,13 @@ def setup(message, n):
         button2 = types.KeyboardButton("❓ Задать вопрос")
         markup.add(button1, button2)
         bot.send_message(message.chat.id, text="Вы вернулись в главное меню", reply_markup=markup)
+    elif message.text == "Вернуться в главное меню":
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        button1 = types.KeyboardButton("👋 Поздороваться")
+        button2 = types.KeyboardButton("❓ Задать вопрос")
+        markup.add(button1, button2)
+        bot.send_message(message.chat.id, text="Вы вернулись в главное меню", reply_markup=markup)
+    # доделать удаление названия еслы выходишь в главное меню без настройка(а лучше применить стандпртные настройки)
     else:
         bot.send_message(message.chat.id, text="На такую комманду я не запрограммировал..")
 
