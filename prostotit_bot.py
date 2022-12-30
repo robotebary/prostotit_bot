@@ -82,7 +82,7 @@ def func(message):
         bot.send_message(message.chat.id, text="Поздороваться с читателями")
 
     elif message.text == "Вернуться в главное меню":
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         button1 = types.KeyboardButton("👋 Поздороваться")
         button2 = types.KeyboardButton("❓ Задать вопрос")
         button3 = types.KeyboardButton("Создать пост")
