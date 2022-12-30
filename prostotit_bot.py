@@ -57,6 +57,10 @@ def starts(message):
 def hello_answer(message):
     bot.send_message(message.chat.id, text="Привеет.. Спасибо что читаешь статью!)")
 
+@bot.message_handler(content_types=['text'], func=lambda message: message.text == "Создать пост")
+def hello_answer(message):
+    bot.send_message(message.chat.id, text="Пришли фото")
+
 
 @bot.message_handler(content_types=['text'],
                      func=lambda message: message.text == "❓ Задать вопрос")
@@ -81,7 +85,8 @@ def func(message):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         button1 = types.KeyboardButton("👋 Поздороваться")
         button2 = types.KeyboardButton("❓ Задать вопрос")
-        markup.add(button1, button2)
+        button3 = types.KeyboardButton("Создать пост")
+        markup.add(button1, button2, button3)
         bot.send_message(message.chat.id, text="Вы вернулись в главное меню", reply_markup=markup)
     else:
         bot.send_message(message.chat.id, text="На такую комманду я не запрограммировал..")
@@ -117,9 +122,8 @@ def get_user_text(message):
 
 @bot.message_handler(content_types=['text'])
 def setup(message, n):
-
     if message.text == "Время":
-        bot.send_message(message.chat.id, f"У меня нет имени{c}")
+        bot.send_message(message.chat.id, f"У меня нет имени{n}")
 
     elif message.text == "Период":
         bot.send_message(message.chat.id, text="Поздороваться с читателями")
@@ -138,7 +142,7 @@ def setup(message, n):
         bot.send_message(message.chat.id, text="Вы вернулись в главное меню", reply_markup=markup)
     # доделать удаление названия еслы выходишь в главное меню без настройка(а лучше применить стандпртные настройки)
     else:
-        bot.send_message(message.chat.id, text="На такую комманду я не запрограммировал..")
+        bot.send_message(message.chat.id, text="На такую комманду я не запрограммировал!!!..")
 
 
 def wright_name(src):
