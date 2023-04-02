@@ -22,8 +22,11 @@ def message_3(message, bot, n):
     btn1 = types.InlineKeyboardButton("Время✅", callback_data=f'but1{n}')
     btn2 = types.InlineKeyboardButton("Период", callback_data=f'but2{n}')
     btn3 = types.InlineKeyboardButton("удаление", callback_data='but3')
+    markup.add(btn1, btn2, btn3)
+    settings = types.InlineKeyboardButton("Проверить настройки поста", callback_data=f'but5{n}')
+    markup.add(settings)
     back = types.InlineKeyboardButton("Вернуться в главное меню", callback_data='but4')
-    markup.add(btn1, btn2, btn3, back)
+    markup.add(back)
 
     bot.send_message(message.chat.id, "произвести настройку", reply_markup=markup)
 
@@ -32,10 +35,12 @@ def message_4(message, bot, n):
     markup = types.InlineKeyboardMarkup()
     button0 = types.InlineKeyboardButton("Когда выложить первый пост", callback_data=f'buton0{n}')
     markup.add(button0)
-    button1 = types.InlineKeyboardButton("месяц", callback_data=f'buton1')
-    button2 = types.InlineKeyboardButton("неделя", callback_data=f'buton2')
-    button3 = types.InlineKeyboardButton("день", callback_data=f'buton3')
+    button1 = types.InlineKeyboardButton("месяц", callback_data=f'buton1{n}')
+    button2 = types.InlineKeyboardButton("неделя", callback_data=f'buton2{n}')
+    button3 = types.InlineKeyboardButton("день", callback_data=f'buton3{n}')
     markup.add(button1, button2, button3)
     back = types.InlineKeyboardButton("Вернуться назад", callback_data=f'buton4{n}')
     markup.add(back)
     bot.send_message(message.chat.id, text="выберите что поменять", reply_markup=markup)
+
+
