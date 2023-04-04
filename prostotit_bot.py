@@ -3,18 +3,20 @@ import datetime
 import telebot
 import openpyxl
 import os
+import schedule
+import message_handler
+import time
 
 from dateutil.relativedelta import relativedelta
 
 from tooken import token
 from datetime import datetime, timedelta
 
-import message_handler
 from utils import wright_name, wright_time, wright_date, wright_month, wright_week, wright_days, ret_urn_day, \
     wright_last_days
 
 bot = telebot.TeleBot(token())
-
+n = 1
 # Создание папки с фото
 if not os.path.isdir("Photoo"):
     os.mkdir("Photoo")
@@ -37,11 +39,12 @@ def menu(message):
 
 @bot.message_handler(content_types=['text'], func=lambda message: message.text == "Создать пост")
 def hello_answer(message):
-    bot.send_message(message.chat.id, text="Пришли фото")
+    bot.send_message(message.chat.id, text="Пришли фото в формате 'без сжатия'")
 
 
 @bot.message_handler(content_types=['photo', 'document'])
 def get_user_text(message):
+    global n
     global ph
     file_info = bot.get_file(message.document.file_id)
     downloaded_file = bot.download_file(file_info.file_path)
@@ -52,9 +55,11 @@ def get_user_text(message):
 
     with open(src, 'wb') as new_file:
         new_file.write(downloaded_file)
-        n = wright_name(src)
+        n = wright_name(src, n)
 
     message_handler.message_3(message, bot, n)
+
+
 #
 # @bot.message_handler(commands=['photo'])
 # def get_user_text(message):
@@ -108,7 +113,11 @@ def setup0(message, n):
         full_date = datetime(current_year, user_time.month, user_time.day).strftime("%d-%m-%Y")
         bot.send_message(message.chat.id, f"установленная дата {full_date}")
         date = ret_urn_day(n, 3)
+        # mons
+        # weeks
+        # days
         if date is not None:
+            # if moons is not None
             date_new = (datetime.strptime(ret_urn_day(n, 7), '%d-%m-%Y').date() - datetime.strptime(date, '%d-%m-%Y')
                         .date()).days
             full_date_post = (datetime.strptime(full_date, '%d-%m-%Y') + timedelta(days=date_new)).strftime('%d-%m-%Y')
@@ -116,6 +125,8 @@ def setup0(message, n):
         full_date = datetime.strptime(full_date, '%d-%m-%Y').strftime('%d-%m-%Y')
         wright_date(full_date, n)
         message_handler.message_4(message, bot, n)
+
+
 # def setup0(message, n):
 #     try:
 #         user_time = datetime.strptime(message.text, '%d-%m')
@@ -165,10 +176,6 @@ def setup1(message, n):
             date = full_date
         date_obj = datetime.strptime(date, '%d-%m-%Y').date()
         result = date_obj + relativedelta(months=month)
-        date_post = ret_urn_day(n, 7)
-        if date_post is not None:
-            date_post = datetime.strptime(date_post, '%d-%m-%Y')
-            result = date_post + relativedelta(months=month)
         wright_last_days(result.strftime("%d-%m-%Y"), n)
     else:
         bot.send_message(message.chat.id, "Введите число!")
@@ -196,10 +203,6 @@ def setup2(message, n):
             date = full_date
         date_obj = datetime.strptime(date, '%d-%m-%Y').date()
         result = date_obj + timedelta(weeks=week)
-        date_post = ret_urn_day(n, 7)
-        if date_post is not None:
-            date_post = datetime.strptime(date_post, '%d-%m-%Y')
-            result = date_post + timedelta(weeks=week)
         wright_last_days(result.strftime("%d-%m-%Y"), n)
     else:
         bot.send_message(message.chat.id, "Введите число!")
@@ -227,10 +230,6 @@ def setup3(message, n):
             date = full_date
         date_obj = datetime.strptime(date, '%d-%m-%Y').date()
         result = date_obj + timedelta(days=days)
-        date_post = ret_urn_day(n, 7)
-        if date_post is not None:
-            date_post = datetime.strptime(date_post, '%d-%m-%Y')
-            result = date_post + timedelta(days=days)
         wright_last_days(result.strftime("%d-%m-%Y"), n)
     else:
         bot.send_message(message.chat.id, "Введите число!")
@@ -260,9 +259,47 @@ def settings(message, n):
     photo_import = photo_import.replace("\\", "/")
     with open(photo_import, 'rb') as photo:
         bot.send_photo(message.chat.id, photo, caption=
-                     f"время отправки поста {times}\n"
-                     f"Дата отправки первого поста {dwy}\n"
-                     f"Дата отправки второго поста {dwys}\n")
+        f"время отправки поста {times}\n"
+        f"Дата отправки первого поста {dwy}\n"
+        f"Дата отправки второго поста {dwys}\n")
+
+
+@bot.message_handler(content_types=['text'], func=lambda message: message.text == "👋 выложить пост")
+def send_mes(message):
+    channel_id = "-1001764282774"
+    global n
+    try:
+        print(n)
+    except NameError:
+        print("Сначала загрузите фото")
+        bot.send_message(message.chat.id, "Сначала загрузите фото")
+    else:
+        bot.send_message(message.chat.id, "Пост отправлен")
+        send_message(channel_id, message_text="Zig hi")
+
+
+def send_message(channel_id, message_text):
+    global n
+    print(n)
+    # bot.send_message(channel_id, message_text)
+    send_time = "14:04"
+    send_date = "2023-04-03"
+    photo_import = ret_urn_day(n, 1)
+    # замена обратных слешей
+    photo_import = photo_import.replace("\\", "/")
+    with open(photo_import, 'rb') as photo:
+        sent_message = bot.send_photo(channel_id, photo, caption=
+        f"{message_text}")
+
+        def delete_message():
+            bot.delete_message(chat_id=channel_id, message_id=sent_message.message_id)
+
+    schedule.every(3).minutes.do(delete_message)
+    # schedule.every().day.at(send_time).do(send_message, channel_id, message_text)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 
 # установка эксель файла если его нет в папке с ботом
@@ -280,6 +317,10 @@ setup_xlsx()
 
 print("bot started")
 bot.infinity_polling()
+
+# while True:
+#     schedule.run_pending()
+#     time.sleep(1)
 
 # Проверка типа файла
 # Инфа для фото

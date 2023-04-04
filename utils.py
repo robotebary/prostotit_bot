@@ -1,8 +1,7 @@
 import openpyxl
 
 
-def wright_name(src):
-    n = 1
+def wright_name(src, n):
     a = openpyxl.load_workbook('schedule.xlsx')
     ws = a.active
     while ws[f'A{n}'].value is not None:
