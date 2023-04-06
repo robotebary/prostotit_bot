@@ -110,48 +110,23 @@ def setup0(message, n):
         bot.register_next_step_handler(message, setup0, n)
     else:
         current_year = datetime.now().year
-        full_date = datetime(current_year, user_time.month, user_time.day).strftime("%d-%m-%Y")
-        bot.send_message(message.chat.id, f"установленная дата {full_date}")
+        full_date_user = datetime(current_year, user_time.month, user_time.day).strftime("%d-%m-%Y")
+        bot.send_message(message.chat.id, f"установленная дата {full_date_user}")
+        full_date = datetime.strptime(full_date_user, "%d-%m-%Y").date()
+        wright_date(full_date.strftime("%d-%m-%Y"), n)
         date = ret_urn_day(n, 3)
-        # mons
-        # weeks
-        # days
+        mons = ret_urn_day(n, 4)
+        weeks = ret_urn_day(n, 5)
+        days = ret_urn_day(n, 6)
         if date is not None:
-            # if moons is not None
-            date_new = (datetime.strptime(ret_urn_day(n, 7), '%d-%m-%Y').date() - datetime.strptime(date, '%d-%m-%Y')
-                        .date()).days
-            full_date_post = (datetime.strptime(full_date, '%d-%m-%Y') + timedelta(days=date_new)).strftime('%d-%m-%Y')
-            wright_last_days(full_date_post, n)
-        full_date = datetime.strptime(full_date, '%d-%m-%Y').strftime('%d-%m-%Y')
-        wright_date(full_date, n)
+            if mons is not None:
+                full_date = full_date + relativedelta(months=mons)
+            if weeks is not None:
+                full_date = full_date + timedelta(weeks=weeks)
+            if days is not None:
+                full_date = full_date + timedelta(days=days)
+            wright_last_days(full_date.strftime("%d-%m-%Y"), n)
         message_handler.message_4(message, bot, n)
-
-
-# def setup0(message, n):
-#     try:
-#         user_time = datetime.strptime(message.text, '%d-%m')
-#     except ValueError:
-#         bot.send_message(message.chat.id, "Введена некорректная дата!")
-#         bot.register_next_step_handler(message, setup0, n)
-#     else:
-#         current_year = datetime.now().year
-#         full_date = str(datetime(current_year, user_time.month, user_time.day).date().strftime("%d-%m-%Y"))
-#         bot.send_message(message.chat.id, f"установленная дата {full_date}")
-#         date = ret_urn_day(n, 3)
-#         if date is not None:
-#             date_old = datetime.strptime(date, '%d-%m-%Y').date()
-#             date_post = datetime.strptime(ret_urn_day(n, 7), '%d-%m-%Y').date()
-#             date_new = int(str((date_post - date_old).days))
-#             full_date = datetime.strptime(full_date, '%d-%m-%Y')
-#             full_date_post = full_date + timedelta(days=date_new)
-#             full_date_post_str = full_date_post.strftime('%d-%m-%Y')
-#             full_date_post = datetime.strptime(full_date_post_str, '%d-%m-%Y').date()
-#             full_date_post = full_date_post.strftime('%d-%m-%Y')
-#             wright_last_days(full_date_post, n)
-#         full_date = datetime.strptime(str(full_date), '%Y-%m-%d').date()
-#         full_date = full_date.strftime('%d-%m-%Y')
-#         wright_date(full_date, n)
-#         message_handler.message_4(message, bot, n)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("buton1"))
@@ -169,14 +144,22 @@ def setup1(message, n):
         bot.send_message(message.chat.id, f"установленное количество месяцов {month}")
         wright_month(month, n)
         date = ret_urn_day(n, 3)
+        mons = ret_urn_day(n, 4)
+        weeks = ret_urn_day(n, 5)
+        days = ret_urn_day(n, 6)
         if date is None:
             date_now = datetime.now()
-            full_date = date_now.strftime('%d-%m-%Y')
-            wright_date(full_date, n)
-            date = full_date
-        date_obj = datetime.strptime(date, '%d-%m-%Y').date()
-        result = date_obj + relativedelta(months=month)
-        wright_last_days(result.strftime("%d-%m-%Y"), n)
+            date = date_now.strftime('%d-%m-%Y')
+            wright_date(date, n)
+        full_date = datetime.strptime(date, "%d-%m-%Y").date()
+        if mons is not None:
+            full_date = full_date + relativedelta(months=mons)
+        if weeks is not None:
+            full_date = full_date + timedelta(weeks=weeks)
+        if days is not None:
+            full_date = full_date + timedelta(days=days)
+        wright_last_days(full_date.strftime("%d-%m-%Y"), n)
+
     else:
         bot.send_message(message.chat.id, "Введите число!")
         bot.register_next_step_handler(message, setup1, n)
@@ -195,15 +178,32 @@ def setup2(message, n):
         week = int(message.text)
         bot.send_message(message.chat.id, f"установленное количество недель {week}")
         wright_week(week, n)
+
         date = ret_urn_day(n, 3)
+        mons = ret_urn_day(n, 4)
+        weeks = ret_urn_day(n, 5)
+        days = ret_urn_day(n, 6)
         if date is None:
             date_now = datetime.now()
-            full_date = date_now.strftime('%d-%m-%Y')
-            wright_date(full_date, n)
-            date = full_date
-        date_obj = datetime.strptime(date, '%d-%m-%Y').date()
-        result = date_obj + timedelta(weeks=week)
-        wright_last_days(result.strftime("%d-%m-%Y"), n)
+            date = date_now.strftime('%d-%m-%Y')
+            wright_date(date, n)
+        full_date = datetime.strptime(date, "%d-%m-%Y").date()
+        if mons is not None:
+            full_date = full_date + relativedelta(months=mons)
+        if weeks is not None:
+            full_date = full_date + timedelta(weeks=weeks)
+        if days is not None:
+            full_date = full_date + timedelta(days=days)
+        wright_last_days(full_date.strftime("%d-%m-%Y"), n)
+        # date = ret_urn_day(n, 3)
+        # if date is None:
+        #     date_now = datetime.now()
+        #     full_date = date_now.strftime('%d-%m-%Y')
+        #     wright_date(full_date, n)
+        #     date = full_date
+        # date_obj = datetime.strptime(date, '%d-%m-%Y').date()
+        # result = date_obj + timedelta(weeks=week)
+        # wright_last_days(result.strftime("%d-%m-%Y"), n)
     else:
         bot.send_message(message.chat.id, "Введите число!")
         bot.register_next_step_handler(message, setup2, n)
@@ -222,15 +222,32 @@ def setup3(message, n):
         days = int(message.text)
         bot.send_message(message.chat.id, f"установленное количество дней {days}")
         wright_days(days, n)
+
         date = ret_urn_day(n, 3)
+        mons = ret_urn_day(n, 4)
+        weeks = ret_urn_day(n, 5)
+        days = ret_urn_day(n, 6)
         if date is None:
             date_now = datetime.now()
-            full_date = date_now.strftime('%d-%m-%Y')
-            wright_date(full_date, n)
-            date = full_date
-        date_obj = datetime.strptime(date, '%d-%m-%Y').date()
-        result = date_obj + timedelta(days=days)
-        wright_last_days(result.strftime("%d-%m-%Y"), n)
+            date = date_now.strftime('%d-%m-%Y')
+            wright_date(date, n)
+        full_date = datetime.strptime(date, "%d-%m-%Y").date()
+        if mons is not None:
+            full_date = full_date + relativedelta(months=mons)
+        if weeks is not None:
+            full_date = full_date + timedelta(weeks=weeks)
+        if days is not None:
+            full_date = full_date + timedelta(days=days)
+        wright_last_days(full_date.strftime("%d-%m-%Y"), n)
+        # date = ret_urn_day(n, 3)
+        # if date is None:
+        #     date_now = datetime.now()
+        #     full_date = date_now.strftime('%d-%m-%Y')
+        #     wright_date(full_date, n)
+        #     date = full_date
+        # date_obj = datetime.strptime(date, '%d-%m-%Y').date()
+        # result = date_obj + timedelta(days=days)
+        # wright_last_days(result.strftime("%d-%m-%Y"), n)
     else:
         bot.send_message(message.chat.id, "Введите число!")
         bot.register_next_step_handler(message, setup3, n)
