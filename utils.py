@@ -66,8 +66,37 @@ def wright_last_days(src, n):
     return n
 
 
+def wright_delete(src, n):
+    a = openpyxl.load_workbook('schedule.xlsx')
+    ws = a.active
+    ws[f'H{n}'] = src
+    print(ws[f'H{n}'].value)
+    a.save('schedule.xlsx')
+    return n
+
+
+def wright_chat_id(src, n):
+    a = openpyxl.load_workbook('schedule.xlsx')
+    ws = a.active
+    ws[f'I{n}'] = src
+    print(ws[f'I{n}'].value)
+    a.save('schedule.xlsx')
+    return n
+
+
+def wright_text(src, n, b):
+    mass = {"1": "A", "2": "B", "3": "C", "4": "D", "5": "E", "6": "F", "7": "G", "8": "H", "9": "I", "10": "J"}
+    cell = mass[f"{b}"]
+    a = openpyxl.load_workbook('schedule.xlsx')
+    ws = a.active
+    ws[f'{cell}{n}'] = src
+    print(ws[f'{cell}{n}'].value)
+    a.save('schedule.xlsx')
+    return n
+
+
 def ret_urn_day(n, b):
-    mass = {"1": "A", "2": "B", "3": "C", "4": "D", "5": "E", "6": "F", "7": "G"}
+    mass = {"1": "A", "2": "B", "3": "C", "4": "D", "5": "E", "6": "F", "7": "G", "8": "H", "9": "I", "10": "J" }
     cell = mass[f"{b}"]
     a = openpyxl.load_workbook('schedule.xlsx')
     ws = a.active

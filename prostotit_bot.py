@@ -1,4 +1,5 @@
 import datetime
+import re
 
 import telebot
 import openpyxl
@@ -13,7 +14,7 @@ from tooken import token
 from datetime import datetime, timedelta
 
 from utils import wright_name, wright_time, wright_date, wright_month, wright_week, wright_days, ret_urn_day, \
-    wright_last_days
+    wright_last_days, wright_delete, wright_chat_id, wright_text
 
 bot = telebot.TeleBot(token())
 n = 1
@@ -32,40 +33,111 @@ def starts(message):
     message_handler.message_1(message, bot)
 
 
+@bot.message_handler(commands=['info_mes'])
+def inf_mess(message):
+    bot.send_message(message.chat.id, "пришли сообщение")
+    bot.register_next_step_handler(message, in_fo)
+def in_fo(message):
+    bot.send_message(message.chat.id, f"{message}")
+
+
+# Получение id чата
+@bot.message_handler(commands=['get_id'])
+def starts(message):
+    bot.send_message(message.chat.id, "пришлите текстовое сообщение из группы, для получения id")
+    bot.register_next_step_handler(message, id_chat_reg)
+
+
+def id_chat_reg(message):
+    try:
+        bot.send_message(message.chat.id, f"ID вашего чата:<pre>{message.forward_from_chat.id}</pre>",
+                         parse_mode="HTML")
+    except AttributeError:
+        bot.send_message(message.chat.id, "Что-то пошло не так, попробуйте прислать сообщение из группы")
+        bot.register_next_step_handler(message, id_chat_reg)
+
+
 @bot.message_handler(content_types=['text'], func=lambda message: message.text == "Вернуться в главное меню")
 def menu(message):
+    global n
     message_handler.message_2(message, bot)
 
 
 @bot.message_handler(content_types=['text'], func=lambda message: message.text == "Создать пост")
 def hello_answer(message):
-    bot.send_message(message.chat.id, text="Пришли фото в формате 'без сжатия'")
+    bot.send_message(message.chat.id, text="Пришли фото теперь в любом формате))")
 
 
 @bot.message_handler(content_types=['photo', 'document'])
 def get_user_text(message):
+    s = None
+    df = None
     global n
     global ph
-    file_info = bot.get_file(message.document.file_id)
-    downloaded_file = bot.download_file(file_info.file_path)
-    file_format_in = message.document.file_name.rfind('.')
-    file_format = message.document.file_name[file_format_in:]
-    print(downloaded_file)
-    src = f"{ph}/" + message.document.file_id + file_format
+    if message.content_type == 'document':
+        file_info = bot.get_file(message.document.file_id)
+        df = bot.download_file(file_info.file_path)
+        file_format_in = message.document.file_name.rfind('.')
+        file_format = message.document.file_name[file_format_in:]
+        print(df)
+        s = f"{ph}/" + message.document.file_id + file_format
+    elif message.content_type == 'photo':
+        file_info = bot.get_file(message.photo[-1].file_id)
+        df = bot.download_file(file_info.file_path)
+        file_format = '.' + "PNG"
+        file_unique_id = message.photo[-1].file_unique_id
+        file_name = f"{file_unique_id}{file_format}"
+        s = f"{ph}/{file_name}"
 
+        # file_info = bot.get_file(message.photo.file_id)
+        # df = bot.download_file(file_info.file_path)
+        # file_format_in = message.photo.file_name.rfind('.')
+        # file_format = message.photo.file_name[file_format_in:]
+        # print(df)
+        # s = f"{ph}/" + message.file_id + file_format
+
+    src = s
+    downloaded_file = df
     with open(src, 'wb') as new_file:
         new_file.write(downloaded_file)
         n = wright_name(src, n)
 
+    bot.send_message(message.chat.id, "ВВедите текст к фото")
+    bot.register_next_step_handler(message, get_message_text_post, n)
+    # get_message_text_post(message, n)
+
+
+def get_message_text_post(message, n):
+    try:
+        wright_text(message.text, n, 10)
+        message_handler.message_3(message, bot, n)
+    except AttributeError:
+        get_message_text_post(message, n)
+
+
+@bot.message_handler(content_types=['text'], func=lambda message: message.text == "❓ Количество постов")
+def hello_answer(message):
+    c = 1
+    a = openpyxl.load_workbook('schedule.xlsx')
+    ws = a.active
+    while ws[f'A{c}'].value is not None:
+        c += 1
+    bot.send_message(message.chat.id, text=f"всего постов: {c-1}")
+
+
+
+@bot.message_handler(commands=['photo'])
+def get_user_text(message):
+    global n
+    a = openpyxl.load_workbook('schedule.xlsx')
+    ws = a.active
+    while ws[f'A{n}'].value is not None:
+        n += 1
+    src = "photo"
+    wright_name(src, n)
     message_handler.message_3(message, bot, n)
 
 
-#
-# @bot.message_handler(commands=['photo'])
-# def get_user_text(message):
-#     src = "photo"
-#     n = wright_name(src)
-#     message_handler.message_3(message, bot, n)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("but1"))
@@ -92,6 +164,16 @@ def setup(message, n):
 def handle(call):
     n = call.data.replace('but2', '')
     message_handler.message_4(call.message, bot, n)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("but3"))
+def dell(call):
+    # n = call.data.replace('but3', '')
+    global n
+    message_id = ret_urn_day(n, 8)
+    chat_id = ret_urn_day(n, 9)
+    bot.delete_message(chat_id=chat_id, message_id=message_id)
+    bot.send_message(call.message.chat.id, 'последний пост удален')
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("buton0"))
@@ -253,6 +335,13 @@ def setup3(message, n):
         bot.register_next_step_handler(message, setup3, n)
 
 
+# Вернуться в главное меню
+@bot.callback_query_handler(func=lambda call: call.data.startswith("but4"))
+def beck(call):
+    # n = call.data.replace('but4', '')
+    message_handler.message_2(call.message, bot)
+
+
 # Вернуться назад
 @bot.callback_query_handler(func=lambda call: call.data.startswith("buton4"))
 def handle(call):
@@ -263,42 +352,84 @@ def handle(call):
 # Проверить настройки поста
 @bot.callback_query_handler(func=lambda call: call.data.startswith("but5"))
 def handle(call):
-    n = call.data.replace('but5', '')
-    settings(call.message, n)
+    bot.send_message(call.message.chat.id, "Какой пост проверить")
+    bot.register_next_step_handler(call.message, settings)
+    # settings(call.message)
 
 
-def settings(message, n):
-    times = ret_urn_day(n, 2)
-    dwy = ret_urn_day(n, 3)
-    dwys = ret_urn_day(n, 7)
-    photo_import = ret_urn_day(n, 1)
+def settings(message):
+    cnn = message.text
+    times = ret_urn_day(cnn, 2)
+    dwy = ret_urn_day(cnn, 3)
+    dwys = ret_urn_day(cnn, 7)
+    photo_import = ret_urn_day(cnn, 1)
+    text_ret = ret_urn_day(cnn, 10)
     # замена обратных слешей
     photo_import = photo_import.replace("\\", "/")
     with open(photo_import, 'rb') as photo:
         bot.send_photo(message.chat.id, photo, caption=
+        f"{text_ret}")
+        bot.send_message(message.chat.id,
         f"время отправки поста {times}\n"
         f"Дата отправки первого поста {dwy}\n"
-        f"Дата отправки второго поста {dwys}\n")
+        f"Дата отправки второго поста {dwys}\n" )
+
+
+# id чата
+@bot.callback_query_handler(func=lambda call: call.data.startswith("but6"))
+def handle(call):
+    n = call.data.replace('but6', '')
+    bot.send_message(call.message.chat.id, f'введите id чата, если не знаете id чата воспользуйтесь командой /get_id'
+                     .format(str(call.data)))
+    bot.answer_callback_query(call.id)
+    bot.register_next_step_handler(call.message, id_chat, n)
+
+
+def id_chat(message, n):
+    if re.match(r'^-?\d+$', message.text):
+        bot.send_message(message.chat.id, f"ID чата:{message.text}")
+        wright_chat_id(message.text, n)
+    else:
+        bot.send_message(message.chat.id, "Введите число.")
+        bot.register_next_step_handler(message, id_chat, n)
+    print(n)
 
 
 @bot.message_handler(content_types=['text'], func=lambda message: message.text == "👋 выложить пост")
 def send_mes(message):
-    channel_id = "-1001764282774"
     global n
+    channel_id = ret_urn_day(n, 9)
+    print(n)
+    if channel_id is None:
+        nn = n
+        a = openpyxl.load_workbook('schedule.xlsx')
+        ws = a.active
+        while ws[f'I{nn}'].value is None:
+            nn -= 1
+            print(nn)
+        channel_id = ws[f'I{nn}'].value
+        print(channel_id)
+
+    return_text = ret_urn_day(n, 10)
+    print(return_text)
     try:
         print(n)
     except NameError:
         print("Сначала загрузите фото")
         bot.send_message(message.chat.id, "Сначала загрузите фото")
     else:
-        bot.send_message(message.chat.id, "Пост отправлен")
-        send_message(channel_id, message_text="Zig hi")
+        try:
+            print(channel_id)
+        except NameError:
+            bot.send_message(message.chat.id, "Сначала введите id чата")
+        else:
+            bot.send_message(message.chat.id, "Пост отправлен")
+            send_message(return_text, channel_id)
 
 
-def send_message(channel_id, message_text):
+def send_message(message_text, channel_id):
     global n
     print(n)
-    # bot.send_message(channel_id, message_text)
     send_time = "14:04"
     send_date = "2023-04-03"
     photo_import = ret_urn_day(n, 1)
@@ -308,10 +439,13 @@ def send_message(channel_id, message_text):
         sent_message = bot.send_photo(channel_id, photo, caption=
         f"{message_text}")
 
-        def delete_message():
-            bot.delete_message(chat_id=channel_id, message_id=sent_message.message_id)
+        message_id = sent_message.message_id
+        wright_delete(message_id, n)
+        print(f"Фото id: {sent_message.message_id}")
 
-    schedule.every(3).minutes.do(delete_message)
+    #     def delete_message():
+    #         bot.delete_message(chat_id=channel_id, message_id=message_id)
+    # schedule.every(3).minutes.do(delete_message)
     # schedule.every().day.at(send_time).do(send_message, channel_id, message_text)
 
     while True:
