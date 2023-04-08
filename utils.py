@@ -103,3 +103,23 @@ def ret_urn_day(n, b):
     src = ws[f'{cell}{n}'].value
     return src
 
+
+def channel_id_return(n):
+    nn = n
+    a = openpyxl.load_workbook('schedule.xlsx')
+    ws = a.active
+    while ws[f'I{nn}'].value is None:
+        nn -= 1
+        print(f"nn{nn}")
+    channel_id = ws[f'I{nn}'].value
+    print(channel_id)
+    return channel_id
+
+
+def implementations_time(impl):
+    if impl == 1:
+        implementations = "✅"
+    else:
+        implementations = " "
+
+    return implementations

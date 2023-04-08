@@ -1,5 +1,7 @@
 from telebot import types
 
+from utils import implementations_time
+
 
 def message_1(message, bot):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -17,9 +19,10 @@ def message_2(message, bot):
     bot.send_message(message.chat.id, text="Вы вернулись в главное меню", reply_markup=markup)
 
 
-def message_3(message, bot, n):
+def message_3(message, bot, n, impl):
+    imp = implementations_time(impl)
     markup = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton("Время✅", callback_data=f'but1{n}')
+    btn1 = types.InlineKeyboardButton(f"Время{imp}", callback_data=f'but1{n}')
     btn2 = types.InlineKeyboardButton("Период", callback_data=f'but2{n}')
     btn3 = types.InlineKeyboardButton("удаление", callback_data=f'but3{n}')
     btn6 = types.InlineKeyboardButton("Чат", callback_data=f'but6{n}')

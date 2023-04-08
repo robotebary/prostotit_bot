@@ -14,10 +14,11 @@ from tooken import token
 from datetime import datetime, timedelta
 
 from utils import wright_name, wright_time, wright_date, wright_month, wright_week, wright_days, ret_urn_day, \
-    wright_last_days, wright_delete, wright_chat_id, wright_text
+    wright_last_days, wright_delete, wright_chat_id, wright_text, channel_id_return
 
 bot = telebot.TeleBot(token())
-n = 1
+n = 0
+impl = 0
 # Создание папки с фото
 if not os.path.isdir("Photoo"):
     os.mkdir("Photoo")
@@ -25,6 +26,28 @@ if not os.path.isdir("Photoo"):
 os.chdir("Photoo")
 ph = os.getcwd()
 print(ph)
+
+
+# установка эксель файла если его нет в папке с ботом
+def setup_xlsx():
+    try:
+        open('schedule.xlsx')
+    except Exception:
+        wb = openpyxl.Workbook()
+        wb.save('schedule.xlsx')
+setup_xlsx()
+
+
+if n == 0:
+    n = 1
+    a = openpyxl.load_workbook('schedule.xlsx')
+    ws = a.active
+    while ws[f'A{n}'].value is not None:
+        n += 1
+        if n != 0:
+            n -= 1
+
+print(n)
 
 
 # команда старт
@@ -65,6 +88,8 @@ def menu(message):
 
 @bot.message_handler(content_types=['text'], func=lambda message: message.text == "Создать пост")
 def hello_answer(message):
+    global impl
+    impl = 0
     bot.send_message(message.chat.id, text="Пришли фото теперь в любом формате))")
 
 
@@ -108,9 +133,10 @@ def get_user_text(message):
 
 
 def get_message_text_post(message, n):
+    global impl
     try:
         wright_text(message.text, n, 10)
-        message_handler.message_3(message, bot, n)
+        message_handler.message_3(message, bot, n, impl)
     except AttributeError:
         get_message_text_post(message, n)
 
@@ -129,13 +155,14 @@ def hello_answer(message):
 @bot.message_handler(commands=['photo'])
 def get_user_text(message):
     global n
+    global impl
     a = openpyxl.load_workbook('schedule.xlsx')
     ws = a.active
     while ws[f'A{n}'].value is not None:
         n += 1
     src = "photo"
     wright_name(src, n)
-    message_handler.message_3(message, bot, n)
+    message_handler.message_3(message, bot, n, impl)
 
 
 
@@ -149,6 +176,7 @@ def handle(call):
 
 
 def setup(message, n):
+    global impl
     try:
         user_time = datetime.strptime(message.text, '%H:%M').time()
     except ValueError:
@@ -157,7 +185,8 @@ def setup(message, n):
     else:
         bot.send_message(message.chat.id, f"установленное время {user_time.strftime('%H:%M')}")
         wright_time(user_time, n)
-        message_handler.message_3(message, bot, n)
+        impl = 1
+        message_handler.message_3(message, bot, n, impl)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("but2"))
@@ -166,12 +195,19 @@ def handle(call):
     message_handler.message_4(call.message, bot, n)
 
 
+# удаление поста
+
+# Почему нельзя удалить пост если отправить его 2-раз(те нельзя удолять один пост 2-а раза
+#  а точнее работает с задержкой
 @bot.callback_query_handler(func=lambda call: call.data.startswith("but3"))
 def dell(call):
     # n = call.data.replace('but3', '')
     global n
+    print(n)
     message_id = ret_urn_day(n, 8)
     chat_id = ret_urn_day(n, 9)
+    if chat_id is None:
+        chat_id = channel_id_return(n)
     bot.delete_message(chat_id=chat_id, message_id=message_id)
     bot.send_message(call.message.chat.id, 'последний пост удален')
 
@@ -345,8 +381,9 @@ def beck(call):
 # Вернуться назад
 @bot.callback_query_handler(func=lambda call: call.data.startswith("buton4"))
 def handle(call):
+    global impl
     n = call.data.replace('buton4', '')
-    message_handler.message_3(call.message, bot, n)
+    message_handler.message_3(call.message, bot, n, impl)
 
 
 # Проверить настройки поста
@@ -401,15 +438,16 @@ def send_mes(message):
     channel_id = ret_urn_day(n, 9)
     print(n)
     if channel_id is None:
-        nn = n
-        a = openpyxl.load_workbook('schedule.xlsx')
-        ws = a.active
-        while ws[f'I{nn}'].value is None:
-            nn -= 1
-            print(nn)
-        channel_id = ws[f'I{nn}'].value
-        print(channel_id)
-
+        channel_id = channel_id_return(n)
+        # nn = n
+        # a = openpyxl.load_workbook('schedule.xlsx')
+        # ws = a.active
+        # while ws[f'I{nn}'].value is None:
+        #     nn -= 1
+        #     print(nn)
+        # channel_id = ws[f'I{nn}'].value
+        # print(channel_id)
+    print(f"channel_id{channel_id}")
     return_text = ret_urn_day(n, 10)
     print(return_text)
     try:
@@ -448,23 +486,12 @@ def send_message(message_text, channel_id):
     # schedule.every(3).minutes.do(delete_message)
     # schedule.every().day.at(send_time).do(send_message, channel_id, message_text)
 
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    # while True:
+    #     schedule.run_pending()
+    #     time.sleep(1)
 
 
-# установка эксель файла если его нет в папке с ботом
 
-
-def setup_xlsx():
-    try:
-        open('schedule.xlsx')
-    except Exception:
-        wb = openpyxl.Workbook()
-        wb.save('schedule.xlsx')
-
-
-setup_xlsx()
 
 print("bot started")
 bot.infinity_polling()
