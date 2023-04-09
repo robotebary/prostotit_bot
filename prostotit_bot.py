@@ -1,6 +1,6 @@
 import datetime
 import re
-
+import models
 import telebot
 import openpyxl
 import os
@@ -16,38 +16,22 @@ from datetime import datetime, timedelta
 from utils import wright_name, wright_time, wright_date, wright_month, wright_week, wright_days, ret_urn_day, \
     wright_last_days, wright_delete, wright_chat_id, wright_text, channel_id_return
 
-bot = telebot.TeleBot(token())
-n = 0
+
+
+bot = telebot.TeleBot(token(), parse_mode='MarkdownV2')
+n = 1
 impl = 0
+
+models.create_tables()
+
 # Создание папки с фото
 if not os.path.isdir("Photoo"):
     os.mkdir("Photoo")
 
-os.chdir("Photoo")
-ph = os.getcwd()
+
+ph = os.path.abspath("Photoo")
 print(ph)
 
-
-# установка эксель файла если его нет в папке с ботом
-def setup_xlsx():
-    try:
-        open('schedule.xlsx')
-    except Exception:
-        wb = openpyxl.Workbook()
-        wb.save('schedule.xlsx')
-setup_xlsx()
-
-
-if n == 0:
-    n = 1
-    a = openpyxl.load_workbook('schedule.xlsx')
-    ws = a.active
-    while ws[f'A{n}'].value is not None:
-        n += 1
-        if n != 0:
-            n -= 1
-
-print(n)
 
 
 # команда старт
@@ -60,6 +44,8 @@ def starts(message):
 def inf_mess(message):
     bot.send_message(message.chat.id, "пришли сообщение")
     bot.register_next_step_handler(message, in_fo)
+
+
 def in_fo(message):
     bot.send_message(message.chat.id, f"{message}")
 
@@ -82,7 +68,6 @@ def id_chat_reg(message):
 
 @bot.message_handler(content_types=['text'], func=lambda message: message.text == "Вернуться в главное меню")
 def menu(message):
-    global n
     message_handler.message_2(message, bot)
 
 
@@ -90,7 +75,7 @@ def menu(message):
 def hello_answer(message):
     global impl
     impl = 0
-    bot.send_message(message.chat.id, text="Пришли фото теперь в любом формате))")
+    bot.send_message(message.chat.id, text="Пришли фото теперь в любом формате\)\)")
 
 
 @bot.message_handler(content_types=['photo', 'document'])
@@ -113,13 +98,6 @@ def get_user_text(message):
         file_unique_id = message.photo[-1].file_unique_id
         file_name = f"{file_unique_id}{file_format}"
         s = f"{ph}/{file_name}"
-
-        # file_info = bot.get_file(message.photo.file_id)
-        # df = bot.download_file(file_info.file_path)
-        # file_format_in = message.photo.file_name.rfind('.')
-        # file_format = message.photo.file_name[file_format_in:]
-        # print(df)
-        # s = f"{ph}/" + message.file_id + file_format
 
     src = s
     downloaded_file = df
@@ -152,6 +130,7 @@ def hello_answer(message):
 
 
 
+
 @bot.message_handler(commands=['photo'])
 def get_user_text(message):
     global n
@@ -163,6 +142,7 @@ def get_user_text(message):
     src = "photo"
     wright_name(src, n)
     message_handler.message_3(message, bot, n, impl)
+
 
 
 
@@ -198,7 +178,7 @@ def handle(call):
 # удаление поста
 
 # Почему нельзя удалить пост если отправить его 2-раз(те нельзя удолять один пост 2-а раза
-#  а точнее работает с задержкой
+#  а точнее работает с задержкой 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("but3"))
 def dell(call):
     # n = call.data.replace('but3', '')
@@ -210,6 +190,7 @@ def dell(call):
         chat_id = channel_id_return(n)
     bot.delete_message(chat_id=chat_id, message_id=message_id)
     bot.send_message(call.message.chat.id, 'последний пост удален')
+    bot.answer_callback_query(callback_query_id=call.id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("buton0"))
@@ -424,7 +405,7 @@ def handle(call):
 
 def id_chat(message, n):
     if re.match(r'^-?\d+$', message.text):
-        bot.send_message(message.chat.id, f"ID чата:{message.text}")
+        bot.send_message(message.chat.id, f"ID чата: `{message.text}` ")
         wright_chat_id(message.text, n)
     else:
         bot.send_message(message.chat.id, "Введите число.")
@@ -439,30 +420,19 @@ def send_mes(message):
     print(n)
     if channel_id is None:
         channel_id = channel_id_return(n)
-        # nn = n
-        # a = openpyxl.load_workbook('schedule.xlsx')
-        # ws = a.active
-        # while ws[f'I{nn}'].value is None:
-        #     nn -= 1
-        #     print(nn)
-        # channel_id = ws[f'I{nn}'].value
-        # print(channel_id)
+
     print(f"channel_id{channel_id}")
     return_text = ret_urn_day(n, 10)
     print(return_text)
-    try:
-        print(n)
-    except NameError:
+    if n is None:
         print("Сначала загрузите фото")
         bot.send_message(message.chat.id, "Сначала загрузите фото")
-    else:
-        try:
-            print(channel_id)
-        except NameError:
-            bot.send_message(message.chat.id, "Сначала введите id чата")
-        else:
-            bot.send_message(message.chat.id, "Пост отправлен")
-            send_message(return_text, channel_id)
+        return
+    if channel_id is None:
+        bot.send_message(message.chat.id, "Сначала введите id чата")
+        return
+    bot.send_message(message.chat.id, "Пост отправлен")
+    send_message(return_text, channel_id)
 
 
 def send_message(message_text, channel_id):
@@ -474,8 +444,7 @@ def send_message(message_text, channel_id):
     # замена обратных слешей
     photo_import = photo_import.replace("\\", "/")
     with open(photo_import, 'rb') as photo:
-        sent_message = bot.send_photo(channel_id, photo, caption=
-        f"{message_text}")
+        sent_message = bot.send_photo(channel_id, photo, caption=message_text)
 
         message_id = sent_message.message_id
         wright_delete(message_id, n)
@@ -491,6 +460,18 @@ def send_message(message_text, channel_id):
     #     time.sleep(1)
 
 
+# установка эксель файла если его нет в папке с ботом
+
+
+def setup_xlsx():
+    try:
+        open('schedule.xlsx')
+    except Exception:
+        wb = openpyxl.Workbook()
+        wb.save('schedule.xlsx')
+
+
+setup_xlsx()
 
 
 print("bot started")
